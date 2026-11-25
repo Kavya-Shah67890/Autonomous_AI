@@ -1,4 +1,4 @@
-"""Modern Streamlit UI for the Autonomous Multi-Agent AI Research System."""
+"""Modern, interactive Streamlit UI for the Autonomous Multi-Agent AI Research System."""
 
 from __future__ import annotations
 
@@ -24,41 +24,150 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("🔬 Autonomous Multi-Agent AI Research System")
-st.caption("Powered by Gemini API, LangGraph, and Playwright")
+# Custom CSS for a cleaner, modern look
+st.markdown(
+    """
+    <style>
+    .hero-box {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        padding: 1.5rem 2rem;
+        border-radius: 12px;
+        color: #f8fafc;
+        margin-bottom: 1.5rem;
+        border: 1px solid #334155;
+    }
+    .hero-box h1 { margin: 0; font-size: 1.9rem; }
+    .hero-box p { margin: 0.4rem 0 0; color: #cbd5e1; font-size: 1rem; }
+    .agent-pill {
+        display: inline-block;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        background: #e2e8f0;
+        color: #0f172a;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-right: 0.35rem;
+        margin-bottom: 0.35rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+    <div class="hero-box">
+        <h1>🔬 Autonomous Multi-Agent AI Research System</h1>
+        <p>6 specialized AI agents that plan, search the web, read pages, compare facts, and write cited reports.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 settings = get_settings()
 
+MODEL_INFO = {
+    "gemini-2.5-flash": "⚡ Fast & smart (Best for most research)",
+    "gemini-2.5-pro": "🧠 Deepest thinking (Best for complex analysis)",
+    "gemini-2.0-flash": "🚀 Lightweight & quick",
+    "gemini-2.0-flash-lite": "💨 Ultra-fast & economical",
+}
+
 with st.sidebar:
-    st.header("⚙️ Configuration")
+    st.header("🎛️ Controls & Settings")
+
     env_key_present = settings.has_valid_api_key()
     if env_key_present:
-        st.success(f"API Key loaded from .env ({settings.masked_api_key()})")
+        st.success(f"🔑 API Key active ({settings.masked_api_key()})")
         api_key = settings.gemini_api_key
     else:
         api_key = st.text_input(
-            "Gemini API Key",
+            "🔑 Gemini API Key",
             type="password",
-            help="Stored only in memory for this session. Never logged or exposed.",
+            help="Your secret key from Google AI Studio. Never shown or saved to disk.",
         )
 
+    st.divider()
+    st.subheader("🤖 AI Brain")
     model_name = st.selectbox(
-        "Gemini Model",
-        options=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
+        "Choose Gemini Model",
+        options=list(MODEL_INFO.keys()),
         index=0,
+        format_func=lambda m: f"{m} — {MODEL_INFO[m]}",
+        help="Pick which Gemini model powers your 6 research agents.",
     )
-    max_iterations = st.slider("Max Autonomous Iterations", min_value=1, max_value=4, value=2)
-    require_permission = st.checkbox(
+
+    st.divider()
+    st.subheader("🔍 Research Depth")
+    max_iterations = st.slider(
+        "Research Rounds",
+        min_value=1,
+        max_value=4,
+        value=2,
+        help="How many times the AI double-checks for missing info and searches again.",
+    )
+    max_search_results = st.slider(
+        "Links per Search",
+        min_value=2,
+        max_value=10,
+        value=settings.max_search_results,
+        help="How many search results to collect for each search query.",
+    )
+    max_pages_per_step = st.slider(
+        "Pages to Read per Round",
+        min_value=1,
+        max_value=6,
+        value=settings.max_pages_per_step,
+        help="How many websites the Investigation Agent opens and reads in detail.",
+    )
+
+    st.divider()
+    st.subheader("🛡️ Safety & Permissions")
+    require_permission = st.toggle(
         "Ask permission before sensitive actions",
         value=True,
-        help="Prompts before visiting external domains or saving reports to disk.",
+        help="Controls whether agents need your approval before visiting websites or saving files.",
     )
-    allow_external_browsing = st.checkbox("Pre-approve external web browsing", value=True)
-    allow_disk_save = st.checkbox("Pre-approve saving report to disk", value=True)
+    allow_external_browsing = st.checkbox(
+        "Allow visiting external websites",
+        value=True,
+        help="Lets the Investigation Agent open and read webpages found in search.",
+    )
+    allow_disk_save = st.checkbox(
+        "Allow saving report to disk",
+        value=True,
+        help="Saves a copy of the final Markdown report in the reports/ folder.",
+    )
+
+# Agent team overview
+st.markdown(
+    """
+    <div>
+        <span class="agent-pill">1. Manager</span>
+        <span class="agent-pill">2. Web Researcher</span>
+        <span class="agent-pill">3. Investigator</span>
+        <span class="agent-pill">4. Analyst</span>
+        <span class="agent-pill">5. Fact-Checker</span>
+        <span class="agent-pill">6. Reporter</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Quick-start example prompts
+st.caption("💡 **Quick-start ideas** (click one to fill):")
+col1, col2, col3 = st.columns(3)
+if col1.button("🎮 Review & rate a website", use_container_width=True):
+    st.session_state["query_input"] = "Review and rate this web app/game: https://business-dynasty.vercel.app"
+if col2.button("🔋 Compare 2026 battery tech", use_container_width=True):
+    st.session_state["query_input"] = "Compare solid-state vs lithium-ion battery breakthroughs in 2025-2026 with sources."
+if col3.button("🤖 Top AI agent frameworks", use_container_width=True):
+    st.session_state["query_input"] = "Compare LangGraph, CrewAI, and AutoGen for multi-agent systems."
 
 query = st.text_area(
-    "Research Instruction",
-    placeholder="e.g., Compare the latest breakthroughs in solid-state batteries in 2025-2026 with credible sources.",
+    "What would you like the AI team to research?",
+    key="query_input",
+    placeholder="Type any topic, question, or URL to investigate...",
     height=100,
 )
 
@@ -109,8 +218,8 @@ if run_clicked:
                 browser=browser,
                 permission_manager=perm_manager,
                 reports_dir=settings.reports_dir,
-                max_search_results=settings.max_search_results,
-                max_pages_per_step=settings.max_pages_per_step,
+                max_search_results=max_search_results,
+                max_pages_per_step=max_pages_per_step,
                 status_callback=on_agent_status,
                 logger=logger,
             )
@@ -134,7 +243,7 @@ if run_clicked:
             }
             result = graph.invoke(initial_state)
 
-        status_box.update(label="Research complete!", state="complete", expanded=False)
+        status_box.update(label="✅ Research complete!", state="complete", expanded=False)
 
         tab_report, tab_sources, tab_facts, tab_logs = st.tabs(
             ["📄 Final Report", "🔗 Sources", "✅ Fact-Check", "📜 Agent Logs"]
@@ -170,5 +279,5 @@ if run_clicked:
             st.code("\n".join(log_handler.records_buffer), language="text")
 
     except Exception as exc:
-        status_box.update(label="Research failed", state="error", expanded=True)
+        status_box.update(label="❌ Research failed", state="error", expanded=True)
         st.error(f"An error occurred: {exc}")
