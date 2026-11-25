@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import subprocess
+import sys
 from dataclasses import dataclass
 from typing import List, Optional
 from urllib.parse import quote_plus, urlparse
@@ -45,8 +47,7 @@ class WebBrowserTool:
         self._browser: Optional[Browser] = None
 
     def __enter__(self) -> "WebBrowserTool":
-        self._playwright = sync_playwright().start()
-        self._browser = self._playwright.chromium.launch(headless=self.headless)
+        self._ensure_browser()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -58,7 +59,18 @@ class WebBrowserTool:
     def _ensure_browser(self) -> Browser:
         if self._browser is None:
             self._playwright = sync_playwright().start()
-            self._browser = self._playwright.chromium.launch(headless=self.headless)
+            try:
+                self._browser = self._playwright.chromium.launch(headless=self.headless)
+            except Exception as exc:
+                if "Executable doesn't exist" in str(exc):
+                    self.logger.info("Playwright Chromium not found. Installing automatically...")
+                    subprocess.run(
+                        [sys.executable, "-m", "playwright", "install", "chromium"],
+                        check=True,
+                    )
+                    self._browser = self._playwright.chromium.launch(headless=self.headless)
+                else:
+                    raise
         return self._browser
 
     def search_google(self, query: str, max_results: int = 5) -> List[SearchResult]:
