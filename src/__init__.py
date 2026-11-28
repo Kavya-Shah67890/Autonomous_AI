@@ -1,1 +1,0 @@
-"""Autonomous Multi-Agent AI Research System."""
