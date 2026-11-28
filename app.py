@@ -139,7 +139,7 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class GeminiClient:
-    def __init__(self, api_key: str, model: str = "gemini-2.5-flash", logger: Optional[logging.Logger] = None):
+    def __init__(self, api_key: str, model: str = "gemini-4-hydrogen", logger: Optional[logging.Logger] = None):
         if not api_key or api_key == "your_gemini_api_key_here":
             raise ValueError("A valid GEMINI_API_KEY is required.")
         self._client = genai.Client(api_key=api_key)
@@ -615,10 +615,11 @@ st.markdown(
 )
 
 MODEL_INFO = {
-    "gemini-2.5-flash": "⚡ Latest Flash — Fast & smart (Recommended)",
-    "gemini-2.5-pro": "🧠 Latest Pro — Deepest thinking",
-    "gemini-2.0-flash": "🚀 Flash 2.0 — Lightweight & quick",
-    "gemini-2.0-flash-lite": "💨 Flash Lite — Ultra-fast & economical",
+    "gemini-4-hydrogen": "⚡ Gemini 4 Hydrogen — Fast everyday research (Recommended)",
+    "gemini-4-neon": "🤖 Gemini 4 Neon — Complex coding & analysis",
+    "gemini-4-argon": "🧪 Gemini 4 Argon — Deep multi-step reasoning",
+    "gemini-4-carbon": "🧠 Gemini 4 Carbon — Strongest, heaviest tasks",
+    "gemini-3.5-flash-lite": "💨 Flash Lite — Ultra-fast & budget-friendly",
 }
 
 env_api_key = os.getenv("GEMINI_API_KEY", "").strip()

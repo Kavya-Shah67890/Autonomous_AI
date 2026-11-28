@@ -21,7 +21,7 @@ class GeminiClientError(RuntimeError):
 class GeminiClient:
     """Wrapper around google.genai.Client with retry and structured output support."""
 
-    def __init__(self, api_key: str, model: str = "gemini-2.5-flash", logger: Optional[logging.Logger] = None):
+    def __init__(self, api_key: str, model: str = "gemini-4-hydrogen", logger: Optional[logging.Logger] = None):
         if not api_key or api_key == "your_gemini_api_key_here":
             raise ValueError("A valid GEMINI_API_KEY is required.")
         self._client = genai.Client(api_key=api_key)

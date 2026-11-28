@@ -16,7 +16,7 @@ class Settings:
     """Application settings loaded from environment variables."""
 
     gemini_api_key: str = field(default_factory=lambda: os.getenv("GEMINI_API_KEY", ""), repr=False)
-    gemini_model: str = field(default_factory=lambda: os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
+    gemini_model: str = field(default_factory=lambda: os.getenv("GEMINI_MODEL", "gemini-4-hydrogen"))
     log_level: str = field(default_factory=lambda: os.getenv("LOG_LEVEL", "INFO"))
     max_search_results: int = field(default_factory=lambda: int(os.getenv("MAX_SEARCH_RESULTS", "5")))
     max_pages_per_step: int = field(default_factory=lambda: int(os.getenv("MAX_PAGES_PER_STEP", "3")))
