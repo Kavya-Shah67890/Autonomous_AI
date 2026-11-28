@@ -18,6 +18,18 @@ class GeminiClientError(RuntimeError):
     """Raised when Gemini API calls fail after retries."""
 
 
+def friendly_error_message(exc: Exception) -> str:
+    """Convert raw API exceptions into short, user-friendly messages."""
+    msg = str(exc)
+    if "429" in msg or "RESOURCE_EXHAUSTED" in msg or "quota" in msg.lower():
+        return "⏳ Rate limit reached (free tier allows ~5 requests/minute). Please wait 30 seconds and try again, or pick another model."
+    if "401" in msg or "403" in msg or "API_KEY_INVALID" in msg:
+        return "🔑 Invalid Gemini API key. Please check your key in the sidebar."
+    if "404" in msg or "NOT_FOUND" in msg:
+        return "🤖 The selected Gemini model is unavailable. Please choose another model in the sidebar."
+    return "⚠️ Something went wrong while contacting the AI. Please try again."
+
+
 class GeminiClient:
     """Wrapper around google.genai.Client with retry and structured output support."""
 

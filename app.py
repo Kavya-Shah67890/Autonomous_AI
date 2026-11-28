@@ -138,6 +138,18 @@ class PermissionManager:
 T = TypeVar("T", bound=BaseModel)
 
 
+def friendly_error_message(exc: Exception) -> str:
+    """Convert raw API exceptions into short, user-friendly messages."""
+    msg = str(exc)
+    if "429" in msg or "RESOURCE_EXHAUSTED" in msg or "quota" in msg.lower():
+        return "⏳ Rate limit reached (free tier allows ~5 requests/minute). Please wait 30 seconds and try again, or pick another model."
+    if "401" in msg or "403" in msg or "API_KEY_INVALID" in msg:
+        return "🔑 Invalid Gemini API key. Please check your key in the sidebar."
+    if "404" in msg or "NOT_FOUND" in msg:
+        return "🤖 The selected Gemini model is unavailable. Please choose another model in the sidebar."
+    return "⚠️ Something went wrong while contacting the AI. Please try again."
+
+
 class GeminiClient:
     def __init__(self, api_key: str, model: str = "gemini-4-hydrogen", logger: Optional[logging.Logger] = None):
         if not api_key or api_key == "your_gemini_api_key_here":
@@ -541,7 +553,7 @@ class ResearchAgents:
             report_md = self.llm.generate_text(prompt=prompt, system_instruction="You are the Report Agent. Produce clear, accurate, well-cited Markdown reports.", temperature=0.3)
         except Exception as exc:
             self.logger.error("Report Agent failed: %s", exc)
-            report_md = f"# Research Report\n\nError generating report: {exc}\n\n## Sources\n{source_refs}"
+            report_md = f"# Research Report\n\n{friendly_error_message(exc)}\n\n## Sources\n{source_refs}"
 
         saved_path: Optional[str] = None
         if self.permission_manager is None or self.permission_manager.request_permission(action="save_report", target=str(self.reports_dir), reason="Save final report to disk."):
@@ -634,7 +646,12 @@ with st.sidebar:
 
     st.divider()
     st.subheader("🤖 AI Brain")
-    model_name = st.selectbox("Choose Gemini Model", options=list(MODEL_INFO.keys()), index=0, format_func=lambda m: f"{m} — {MODEL_INFO[m]}")
+    model_name = st.selectbox(
+        "Choose Gemini Model",
+        options=list(MODEL_INFO.keys()),
+        index=0,
+    )
+    st.caption(MODEL_INFO[model_name])
 
     st.divider()
     st.subheader("🔍 Research Depth")
@@ -662,13 +679,23 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+with st.expander("👥 Meet the 6 AI Agents", expanded=False):
+    st.markdown(
+        "- **1. Manager**: Breaks your question into sub-questions and search queries.\n"
+        "- **2. Web Researcher**: Searches the web for relevant links.\n"
+        "- **3. Investigator**: Opens and reads webpages to extract key information.\n"
+        "- **4. Analyst**: Compares sources and spots contradictions or gaps.\n"
+        "- **5. Fact-Checker**: Verifies claims against the collected evidence.\n"
+        "- **6. Reporter**: Writes the final cited Markdown report."
+    )
+
 st.caption("💡 **Quick-start ideas** (click one to fill):")
 c1, c2, c3 = st.columns(3)
-if c1.button("🎮 Review & rate a website", use_container_width=True):
+if c1.button("🎮 Review Website", use_container_width=True):
     st.session_state["query_input"] = "Review and rate this web app/game: https://business-dynasty.vercel.app"
-if c2.button("🔋 Compare 2026 battery tech", use_container_width=True):
+if c2.button("🔋 2026 Battery Tech", use_container_width=True):
     st.session_state["query_input"] = "Compare solid-state vs lithium-ion battery breakthroughs in 2025-2026 with sources."
-if c3.button("🤖 Top AI agent frameworks", use_container_width=True):
+if c3.button("🤖 AI Agent Frameworks", use_container_width=True):
     st.session_state["query_input"] = "Compare LangGraph, CrewAI, and AutoGen for multi-agent systems."
 
 query = st.text_area("What would you like the AI team to research?", key="query_input", placeholder="Type any topic, question, or URL to investigate...", height=100)
@@ -757,4 +784,4 @@ if st.button("🚀 Start Autonomous Research", type="primary", use_container_wid
             st.code("\n".join(log_handler.records_buffer), language="text")
     except Exception as exc:
         status_box.update(label="❌ Research failed", state="error", expanded=True)
-        st.error(f"An error occurred: {exc}")
+        st.error(friendly_error_message(exc))
