@@ -120,24 +120,24 @@ class ResearchAgents:
         candidates = [u for u in state.get("discovered_urls", []) if u not in already_fetched]
         to_visit = candidates[: self.max_pages_per_step]
 
-        self._notify("Investigation Agent", f"Exploring {len(to_visit)} webpages in parallel...")
+        self._notify("Investigation Agent", f"Exploring {len(to_visit)} webpages...")
         fetched_sources: list[SourceDocument] = []
 
-        with ThreadPoolExecutor(max_workers=4) as pool:
-            for page in pool.map(self.browser.fetch_page, to_visit):
-                if page.error:
-                    self.logger.warning("Skipping %s: %s", page.url, page.error)
-                    continue
-                if page.text:
-                    fetched_sources.append(
-                        {
-                            "url": page.url,
-                            "title": page.title,
-                            "snippet": page.text[:300],
-                            "content": page.text,
-                            "links": page.links,
-                        }
-                    )
+        for url in to_visit:
+            page = self.browser.fetch_page(url)
+            if page.error:
+                self.logger.warning("Skipping %s: %s", url, page.error)
+                continue
+            if page.text:
+                fetched_sources.append(
+                    {
+                        "url": page.url,
+                        "title": page.title,
+                        "snippet": page.text[:300],
+                        "content": page.text,
+                        "links": page.links,
+                    }
+                )
 
         return {
             "sources": fetched_sources,

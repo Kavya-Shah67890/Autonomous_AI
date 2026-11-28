@@ -139,7 +139,7 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class GeminiClient:
-    def __init__(self, api_key: str, model: str = "gemini-3.8-flash", logger: Optional[logging.Logger] = None):
+    def __init__(self, api_key: str, model: str = "gemini-2.5-flash", logger: Optional[logging.Logger] = None):
         if not api_key or api_key == "your_gemini_api_key_here":
             raise ValueError("A valid GEMINI_API_KEY is required.")
         self._client = genai.Client(api_key=api_key)
@@ -482,13 +482,13 @@ class ResearchAgents:
         already_fetched = {s["url"] for s in state.get("sources", [])}
         candidates = [u for u in state.get("discovered_urls", []) if u not in already_fetched]
         to_visit = candidates[: self.max_pages_per_step]
-        self._notify("Investigation Agent", f"Exploring {len(to_visit)} webpages in parallel...")
+        self._notify("Investigation Agent", f"Exploring {len(to_visit)} webpages...")
         fetched_sources: list[SourceDocument] = []
-        with ThreadPoolExecutor(max_workers=4) as pool:
-            for page in pool.map(self.browser.fetch_page, to_visit):
-                if page.error or not page.text:
-                    continue
-                fetched_sources.append({"url": page.url, "title": page.title, "snippet": page.text[:300], "content": page.text, "links": page.links})
+        for url in to_visit:
+            page = self.browser.fetch_page(url)
+            if page.error or not page.text:
+                continue
+            fetched_sources.append({"url": page.url, "title": page.title, "snippet": page.text[:300], "content": page.text, "links": page.links})
         return {
             "sources": fetched_sources,
             "messages": [{"agent": "Investigation Agent", "content": f"Extracted content from {len(fetched_sources)} webpages."}],
@@ -615,10 +615,10 @@ st.markdown(
 )
 
 MODEL_INFO = {
-    "gemini-3.8-flash": "⚡ Latest, fast & smart (Recommended)",
-    "gemini-3.8-pro": "🧠 Deepest thinking (Best for complex analysis)",
-    "gemini-3.5-flash": "🚀 Lightweight & quick",
-    "gemini-3.5-pro": "🎯 High-accuracy reasoning",
+    "gemini-2.5-flash": "⚡ Latest Flash — Fast & smart (Recommended)",
+    "gemini-2.5-pro": "🧠 Latest Pro — Deepest thinking",
+    "gemini-2.0-flash": "🚀 Flash 2.0 — Lightweight & quick",
+    "gemini-2.0-flash-lite": "💨 Flash Lite — Ultra-fast & economical",
 }
 
 env_api_key = os.getenv("GEMINI_API_KEY", "").strip()
